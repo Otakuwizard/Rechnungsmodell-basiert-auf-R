@@ -7,6 +7,7 @@ library(car)
 library(lattice)
 library(FAdist)
 library(Renext)
+library(d3Network)
 source('parameters_ml.R')
 
 
@@ -18,7 +19,7 @@ shinyServer(function(input, output){
     read.csv(inFile$datapath, header=input$hd, sep=input$sep)
   })
   
-  getColnames = reactive({
+  get.numeric.colnames = reactive({
     if(is.null(datasetInput()))
       return(NULL)
     data = datasetInput()
@@ -29,6 +30,26 @@ shinyServer(function(input, output){
         colnames = append(colnames, coln)
     }
     return(colnames)
+  })
+  
+  get.selected.data = reactive({
+    data = datasetInput()
+    coln = input$seletedData
+    i = which.names(coln, names(data))
+    #if(length(i) == 0)
+    #  return(NULL)
+    r = data[,i]
+    return(r)
+  })
+  
+  get.selected.status = reactive({
+    coln = input$seletedStatus
+    data = datasetInput()
+    i = which.names(coln, names(data))
+    if(length(i) == 0)
+      return(NULL)
+    r = data[,i]
+    return(r)
   })
   
   #get_exp_str = reactive({
@@ -42,7 +63,7 @@ shinyServer(function(input, output){
     return(c(get_sys_expression(i_str), get_sys_d_expression(i_str)))
   })
   
-  get.parameter.table = function(fn, distribution, ...){
+  get.parameter.table = function(fn, distribution, censoring=FALSE, ...){
     if(is.null(datasetInput()))
       return(NULL)
     data = datasetInput()
@@ -57,25 +78,31 @@ shinyServer(function(input, output){
     zens = NULL
     #for(coln in names(data)){
     coln = input$selectedData
-      i = which.names(coln, names(data))
-      if(is.numeric(data[,i])){
-        result = (fn(data[,i], ...))
-        parameters = result$par
-        if(!is.na(parameters[1]))
-          par1 = append(par1, parameters[1])
-        if(!is.na(parameters[2]))
-          par2 = append(par2, parameters[2])
-        if(!is.na(parameters[3]))
-          par3 = append(par3, parameters[3])
-        if(!is.na(parameters[4]))
-          par4 = append(par4, parameters[4])
-        if(!is.na(parameters[5]))
-          par5 = append(par5, parameters[5])
-        N = append(N, result$N)
-        zens = append(zens, result$Zensierung)
-        value = append(value, -result$value)
-        dataId = append(dataId, coln)
+    i = which.names(coln, names(data))
+    if(is.numeric(data[,i])){
+      coln2 = input$selectedStatus
+      j = which.names(coln2, names(data))
+      if(censoring && is.numeric(data[,j])){
+        result = fn(data[,i], q_data=data[,j])
+      }else{
+        result = fn(data[,i])
       }
+      parameters = round(result$par, digits=3)
+      if(!is.na(parameters[1]))
+        par1 = append(par1, parameters[1])
+      if(!is.na(parameters[2]))
+        par2 = append(par2, parameters[2])
+      if(!is.na(parameters[3]))
+        par3 = append(par3, parameters[3])
+      if(!is.na(parameters[4]))
+        par4 = append(par4, parameters[4])
+      if(!is.na(parameters[5]))
+        par5 = append(par5, parameters[5])
+      N = append(N, result$N)
+      zens = append(zens, result$Zensierung)
+      value = append(value, round(-result$value, digits=3))
+      dataId = append(dataId, coln)
+    }
     #}
     if(distribution == 'weib2')
       pm.dataset = data.frame('data'=dataId, 'beta'=par1, 'tau'=par2, 'value'=value)
@@ -91,12 +118,20 @@ shinyServer(function(input, output){
       pm.dataset = data.frame('data'=dataId, 'beta1'=par1, 'tau1'=par2, 'beta2'=par3, 'tau2'=par4, 'p'=par5, 'N'=N, 'Zensierung'=zens, 'value'=value)
     if(distribution == 'exp')
       pm.dataset = data.frame('data'=dataId, 'lambda'=par1, 'value'=value)
+    if(distribution == 'z_exp')
+      pm.dataset = data.frame('data'=dataId, 'lambda'=par1, 'N'=N, 'Zensierung'=zens, 'value'=value)
     if(distribution == 'logNormal')
       pm.dataset = data.frame('data'=dataId, 'miu'=par1, 'sigma'=par2, 'value'=value)
+    if(distribution == 'z_logNormal')
+      pm.dataset = data.frame('data'=dataId, 'miu'=par1, 'sigma'=par2, 'N'=N, 'Zensierung'=zens, 'value'=value)
     if(distribution == 'gumbel')
       pm.dataset = data.frame('data'=dataId, 'miu'=par1, 'beta'=par2, 'value'=value)
+    if(distribution == 'z_gumbel')
+      pm.dataset = data.frame('data'=dataId, 'miu'=par1, 'beta'=par2, 'N'=N, 'Zensierung'=zens, 'value'=value)
     if(distribution == 'gamma')
       pm.dataset = data.frame('data'=dataId, 'alpha'=par1, 'beta'=par2, 'value'=value)
+    if(distribution == 'z_gamma')
+      pm.dataset = data.frame('data'=dataId, 'alpha'=par1, 'beta'=par2, 'N'=N, 'Zensierung'=zens, 'value'=value)
     return(pm.dataset)
   }
   
@@ -109,16 +144,11 @@ shinyServer(function(input, output){
   })
   
   output$weib2.pm.table = renderTable({
-    data = datasetInput()
-    coln = input$selectedStatus
-    i = which.names(coln, names(data))
-    if(length(i) == 0)
-      return()
-    get.parameter.table(get.weib2.zensiert.result, 'z_weib2', q_data=data[,i])
+    get.parameter.table(get.weib2.result, 'weib2')
   })
   
   output$z_weib2.pm.table = renderTable({
-    get.parameter.table(get.weib2.zensiert.result, 'z_weib2', input$sys_t)
+    get.parameter.table(get.weib2.result, 'z_weib2', censoring=TRUE)
   })
   
   output$weib3.pm.table = renderTable({
@@ -126,7 +156,7 @@ shinyServer(function(input, output){
   })
   
   output$z_weib3.pm.table = renderTable({
-    get.parameter.table(get.weib3.zensiert.result, 'z_weib3', input$sys_t)
+    get.parameter.table(get.weib3.result, 'z_weib3', censoring=TRUE)
   })
   
   output$mixedWeib.pm.table = renderTable({
@@ -134,33 +164,49 @@ shinyServer(function(input, output){
   })
   
   output$z_mixedweib.pm.table = renderTable({
-    get.parameter.table(get.mixedweib.zensiert.result, 'z_mixedWeib', input$sys_t)
+    get.parameter.table(get.mixedWeib.result, 'z_mixedWeib', TRUE)
   })
   
   output$exp.pm.table = renderTable({
     get.parameter.table(get.exp.result, 'exp')
   })
   
+  output$z_exp.pm.table = renderTable({
+    get.parameter.table(get.exp.result, 'z_exp', TRUE)
+  })
+  
   output$logNormal.pm.table = renderTable({
     get.parameter.table(get.logNormal.result, 'logNormal')
+  })
+  
+  output$z_logNormal.pm.table = renderTable({
+    get.parameter.table(get.logNormal.result, 'z_logNormal', TRUE)
   })
   
   output$gumbel.pm.table = renderTable({
     get.parameter.table(get.gumbel.result, 'gumbel')
   })
   
+  output$z_gumbel.pm.table = renderTable({
+    get.parameter.table(get.gumbel.result, 'z_gumbel', TRUE)
+  })
+  
   output$gamma.pm.table = renderTable({
     get.parameter.table(get.gamma.result, 'gamma')
   })
   
+  output$z_gamma.pm.table = renderTable({
+    get.parameter.table(get.gamma.result, 'z_gamma', TRUE)
+  })
+  
   output$selectableData = renderUI({
-    if(is.null(getColnames()))
+    if(is.null(get.numeric.colnames()))
       return(NULL)
     tagList(
       radioButtons('selectedData', 'Choose a time data',
-                   getColnames()),
+                   get.numeric.colnames()),
       radioButtons('selectedStatus', 'Choose a status data',
-                   getColnames())
+                   get.numeric.colnames())
     )
   })
 
@@ -237,29 +283,30 @@ shinyServer(function(input, output){
       return()
     data = datasetInput()
     coln = input$selectedData
-    seriensystem = NULL
-    parallelsystem = NULL
     i = which.names(coln, names(data))
     if(length(i) == 0)
       return('Choose a data')
     exp_str = input$exp_input
+    dis_fn = input$distribution
     r = get.weib3.result(data[,i])
     beta = r$par[1]
     tau = r$par[2]
-    #t = input$sys_t
     t = data[,i]
     if(exp_str == ''){
       value = rep(NA, times=length(t))
-      values = rep(value, times=2)
-    }else{  
+      values = list(value=value, density=value)
+    }else if(is.na(input$par1) && is.na(input$par2)){  
       values = get_sys_value(exp_str, t, beta, tau)
+    }else{
+      values = get_sys_value(exp_str, t, input$par1, input$par2, dis_fn)
     }
     value_weibull = pweibull(t, beta, tau)
     id = seq(1, length(t))
-    tb = data.frame('id'=id, 'data'=data[,i], 'Weibull'=as.character(value_weibull), 'Survive Probability'=as.character(1-value_weibull), 'System Survive'=as.character(values[1]), 'Density'=as.character(values[2]))
+    tb = data.frame('id'=id, 'data'=data[,i], 'Weibull'=value_weibull, 'Survive Probability'=1-value_weibull, 'System Survive'=values$value, 'Density'=values$density)
     names(tb)[2] = coln
     head(tb, n=input$obs)
-  })
+  },
+  digits = 3)
   
   #get_exp_value = reactive({
   #  exp_sys = parse(text=eval(parse(text=input$exp_input)))
@@ -269,18 +316,21 @@ shinyServer(function(input, output){
   
   output$exp = renderText({
     i_str = input$exp_input
+    dis_fn = input$distribution
     if(i_str == '')
       return('Please enter a expression.')
-    exp_sys = get_sys_expression(i_str)
+    re = get.expression(i_str, dis_fn)
+    exp_sys = re$expression
     simp_exp = Simplify(exp_sys)
     return(as.character(simp_exp))
   })
   
   output$dexp = renderText({
     i_str = input$exp_input
+    dis_fn = input$distribution
     if(i_str == '')
       return('Please enter a expression.')
-    dexp = get_sys_d_expression(i_str)
+    dexp = get_sys_d_expression(i_str, dis_fn)
     simp_exp = Simplify(dexp)
     return(as.character(simp_exp))
   })
@@ -288,6 +338,7 @@ shinyServer(function(input, output){
   output$expTb = renderTable({
     exp_str = input$exp_input
     t = input$sys_t
+    dis_fn = input$distribution
     if(exp_str == '')
       return()
     if(is.null(datasetInput()))
@@ -300,14 +351,47 @@ shinyServer(function(input, output){
     if(length(i) == 0)
       return('Choose a data')
     exp_str = input$exp_input
-    r = get.weib3.result(data[,i])
-    beta = r$par[1]
-    tau = r$par[2]
-    values = get_sys_value(exp_str, t, beta, tau)
-    tb = data.frame('System Survive'=as.character(values[1]), 'Density'=as.character(values[2]))
+    if(is.na(input$par1) && is.na(input$par2)){
+      r = get.weib3.result(data[,i])
+      values = get_sys_value(exp_str, t, r$par[1], r$par[2])
+    }else{
+      values = get_sys_value(exp_str, t, input$par1, input$par2, dis_fn)
+    }
+    tb = data.frame('System Survive'=values$value, 'Density'=values$density)
     return(tb)
+  },
+  digits = 3)
+  
+  output$links = renderPlot({
+    i_str = input$exp_input
+    dis_fn = input$distribution
+    if(i_str == '')
+      return('Please enter a expression.')
+    #require(d3Network)
+    re = get.expression(i_str, dis_fn)
+    links = re$links
+    #names(links) = c('source', 'target', 'value')
+    nodes = data.frame(name=unique(c(links$N1, links$N2)), stringsAsFactors=FALSE)
+    nodes$seq = 0:(nrow(nodes)-1)
+    links = merge(links, nodes, by.x='N1', by.y='name')
+    names(links)[4] = 'source'
+    links = merge(links, nodes, by.x='N2', by.y='name')
+    names(links)[5] = 'target'
+    names(links)[3] = 'value'
+    
+    links = subset(links, select=c('source', 'target', 'value'))
+    nodes = subset(nodes, select=c('name'))
+    
+    d3ForceNetwork(Links=links, Nodes=nodes, Source = "source",  
+                    Target = "target", Value='value', NodeID='name',
+                    height=1200, width=1800, fontsize = 13,
+                    linkDistance=300, file='./elements_links.html')
+    require(igraph)
+    g = graph_from_data_frame(re$links)
+    #E(g)$curved = 0.2 
+    plot(g, layout=layout_as_tree, vertex.size=6,
+         vertex.color='#3182bd', vertex.label.cex=1.5,
+         vertex.label.dist=0.5, vertex.label.color='black')
   })
-  #output$exp2 = renderText({
-  #  return(get_exp_value())
-  #})
+  
 })
