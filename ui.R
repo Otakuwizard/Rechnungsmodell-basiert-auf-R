@@ -1,20 +1,32 @@
 library(shiny)
 
 shinyUI(pageWithSidebar(
-  headerPanel('ML Schaetzung der Parameter unter verschiedenen Verteilungsmodelen'),
+  headerPanel('Estimation Modell by Shiny'),
   
   sidebarPanel(
-    fileInput('file', 'Choose CSV File', 
+    fileInput('file', 'Choose A CSV File', 
               accept=c('text/csv', 'text/comma-separated-values,text/plain')),
+    numericInput('obs', 'Number of observations to view', 10),
     conditionalPanel(
       condition = 'output.element || output.plot1',
       textAreaInput('exp_input', 'Enter the expression of system', resize='vertical'),
       helpText('Parallelsystem is with P() evaluated.',
                'Seriensystem is with S() evaluated.',
-               'For example: P(1, 2, 3, S(4, 5))')
+               'For example: P(1, 2, 3, S(4, 5))'),
+    
+      radioButtons('distribution', 'Choose a distribution function',
+                   c(weibull='w',
+                     exp='e',
+                     lognormal='l'),
+                   'w'),
+      numericInput('par1', 'Set the value of the first parameter', NULL),
+      numericInput('par2', 'Set the value of the second parameter', NULL),
+      numericInput('sys_t', 'Set a timepoint of observation', 0),
+      radioButtons('selectedGraph', 'Choose a graph',
+                   c(static='s',
+                     dynamic='d'),
+                   's')
     ),
-    numericInput('sys_t', 'Set a timepoint of observation', 0),
-    numericInput('obs', 'Number of observations to view', 10),
     checkboxInput('hd', 'header', TRUE),
     radioButtons('sep', 'Separator',
                 c(Comma=',',
@@ -27,62 +39,69 @@ shinyUI(pageWithSidebar(
   mainPanel(
     tabsetPanel(
       tabPanel('Table', tableOutput('table')),
-      tabPanel('Parameter Estimate',
-               h4('Zwei parameterische Weibull-Verteilung'),
+      tabPanel('Summary', verbatimTextOutput('summary')),
+      tabPanel('Parameters Estimation',
+               h4('Weibull-distribution with two parameters'),
                tableOutput('weib2.pm.table'),
-               conditionalPanel(
-                 condition = 'input.sys_t != 0',
-                 h4('Unter t zensierte Daten:'),
-                 tableOutput('z_weib2.pm.table')
-               ),
-               h4('Drei parameterische Weibull-Verteilung'),
+               h4('censoring data:'),
+               tableOutput('z_weib2.pm.table'),
+               
+               h4('Weibull-distribution with three parameters'),
                tableOutput('weib3.pm.table'),
-               conditionalPanel(
-                 condition = 'input.sys_t != 0',
-                 h4('Unter t zensierte Daten:'),
-                 tableOutput('z_weib3.pm.table')
-               ),
+               h4('censoring data:'),
+               tableOutput('z_weib3.pm.table'),
                
-               h4('Gemischt Weibull-Verteilung'),
+               h4('Mixed weibull-distribution'),
                tableOutput('mixedWeib.pm.table'),
-               conditionalPanel(
-                 condition = 'input.sys_t != 0',
-                 h4('Unter t zensierte Daten:'),
-                 tableOutput('z_mixedweib.pm.table')
-               ),
+               h4('censoring data:'),
+               tableOutput('z_mixedweib.pm.table'),
                
-               h4('Exponential Verteilung'),
+               h4('Exponential distribution'),
                tableOutput('exp.pm.table'),
+               h4('censoring data:'),
+               tableOutput('z_exp.pm.table'),
                
-               h4('Log-normal Verteilung'),
+               h4('Lognormal distribution'),
                tableOutput('logNormal.pm.table'),
+               h4('censoring data:'),
+               tableOutput('z_logNormal.pm.table'),
                
-               h4('Gumbel Verteilung'),
+               h4('Gumbel distribution'),
                tableOutput('gumbel.pm.table'),
+               h4('censoring data:'),
+               tableOutput('z_gumbel.pm.table'),
                
-               h4('Gamma Verteilung'),
-               tableOutput('gamma.pm.table')
+               h4('Gamma distribution'),
+               tableOutput('gamma.pm.table'),
+               h4('censoring data:'),
+               tableOutput('z_gamma.pm.table')
                ),
-      tabPanel('Schaetzung der Verfuegbatkeit von Systemen', 
+      
+      
+      #tabPanel('Dynamic Graph',
+      #         uiOutput('html')),
+
+      tabPanel('Plot', plotOutput('plot1'), 
+               plotOutput('plot2'), 
+               plotOutput('plot3'),
+               plotOutput('plot4')
+               ),
+      tabPanel('Avalibility estimation and graph of systems', 
                tableOutput('element'),
                
                h4('Expression:'),
                textOutput('exp'),
                
-               h4('Density Expression:'),
-               textOutput('dexp'),
+               h4('Density Curve:'),
+               plotOutput('dplot'),
                
                h4('Result with entered t:'),
-               tableOutput('expTb')),
-      
-      tabPanel('Summary', verbatimTextOutput('summary')),
-      tabPanel('Plot', plotOutput('plot1'), 
-               plotOutput('plot2'), 
-               conditionalPanel(
-                condition = 'input.sys_t != 0',          
-                plotOutput('plot3')
-                )
-               )
+               tableOutput('expTb'),
+               
+               h4('The diagram of system'),
+               uiOutput('d_graph'),
+               plotOutput('s_graph')
+      )
     )
   )
 ))
