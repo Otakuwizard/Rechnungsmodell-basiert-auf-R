@@ -1,2 +1,2 @@
-# Rechungsmodell-basiert-auf-R
+# Rechnungsmodell-basiert-auf-R
 Meine Masterarbeit
