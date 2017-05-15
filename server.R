@@ -148,59 +148,73 @@ shinyServer(function(input, output){
   })
   
   output$weib2.pm.table = renderTable({
-    get.parameter.table(get.weib2.result, 'weib2')
-  })
-  
-  output$z_weib2.pm.table = renderTable({
-    get.parameter.table(get.weib2.result, 'z_weib2', censoring=TRUE)
+    if(is.null(input$selectedStatus)){
+      return()
+    }else if(input$selectedStatus == 'None'){
+      get.parameter.table(get.weib2.result, 'weib2')
+    }else{
+      get.parameter.table(get.weib2.result, 'z_weib2', censoring=TRUE)
+    }
   })
   
   output$weib3.pm.table = renderTable({
-    get.parameter.table(get.weib3.result, 'weib3')
-  })
-  
-  output$z_weib3.pm.table = renderTable({
-    get.parameter.table(get.weib3.result, 'z_weib3', censoring=TRUE)
+    if(is.null(input$selectedStatus)){
+      return()
+    }else if(input$selectedStatus == 'None'){
+      get.parameter.table(get.weib3.result, 'weib3')
+    }else{
+      get.parameter.table(get.weib3.result, 'z_weib3', censoring=TRUE)
+    }
   })
   
   output$mixedWeib.pm.table = renderTable({
-    get.parameter.table(get.mixedWeib.result, 'mixedWeib')
-  })
-  
-  output$z_mixedweib.pm.table = renderTable({
-    get.parameter.table(get.mixedWeib.result, 'z_mixedWeib', TRUE)
+    if(is.null(input$selectedStatus)){
+      return()
+    }else if(input$selectedStatus == 'None'){
+      get.parameter.table(get.mixedWeib.result, 'mixedWeib')
+    }else{
+      get.parameter.table(get.mixedWeib.result, 'z_mixedWeib', TRUE)
+    }
   })
   
   output$exp.pm.table = renderTable({
-    get.parameter.table(get.exp.result, 'exp')
-  })
-  
-  output$z_exp.pm.table = renderTable({
-    get.parameter.table(get.exp.result, 'z_exp', TRUE)
+    if(is.null(input$selectedStatus)){
+      return()
+    }else if(input$selectedStatus == 'None'){
+      get.parameter.table(get.exp.result, 'exp')
+    }else{
+      get.parameter.table(get.exp.result, 'z_exp', TRUE)
+    }
   })
   
   output$logNormal.pm.table = renderTable({
-    get.parameter.table(get.logNormal.result, 'logNormal')
-  })
-  
-  output$z_logNormal.pm.table = renderTable({
-    get.parameter.table(get.logNormal.result, 'z_logNormal', TRUE)
+    if(is.null(input$selectedStatus)){
+      return()
+    }else if(input$selectedStatus == 'None'){
+      get.parameter.table(get.logNormal.result, 'logNormal')
+    }else{
+      get.parameter.table(get.logNormal.result, 'z_logNormal', TRUE)
+    }
   })
   
   output$gumbel.pm.table = renderTable({
-    get.parameter.table(get.gumbel.result, 'gumbel')
-  })
-  
-  output$z_gumbel.pm.table = renderTable({
-    get.parameter.table(get.gumbel.result, 'z_gumbel', TRUE)
+    if(is.null(input$selectedStatus)){
+      return()
+    }else if(input$selectedStatus == 'None'){
+      get.parameter.table(get.gumbel.result, 'gumbel')
+    }else{
+      get.parameter.table(get.gumbel.result, 'z_gumbel', TRUE)
+    }
   })
   
   output$gamma.pm.table = renderTable({
-    get.parameter.table(get.gamma.result, 'gamma')
-  })
-  
-  output$z_gamma.pm.table = renderTable({
-    get.parameter.table(get.gamma.result, 'z_gamma', TRUE)
+    if(is.null(input$selectedStatus)){
+      return()
+    }else if(input$selectedStatus == 'None'){
+      get.parameter.table(get.gamma.result, 'gamma')
+    }else{
+      get.parameter.table(get.gamma.result, 'z_gamma', TRUE)
+    }
   })
   
   output$selectableData = renderUI({
@@ -210,7 +224,7 @@ shinyServer(function(input, output){
       radioButtons('selectedData', 'Choose a time data',
                    get.numeric.colnames()),
       radioButtons('selectedStatus', 'Choose a status data',
-                   get.numeric.colnames())
+                   append('None', get.numeric.colnames()))
     )
   })
 
@@ -366,7 +380,8 @@ shinyServer(function(input, output){
     r = fn(data[,i])
     par1 = r$par[1]
     par2 = r$par[2]
-    t = sort(data[,i])
+    end_t = max(data[,i])
+    t = seq(0, end_t, 0.5)
     if(is.na(input$par1) && is.na(input$par2)){  
       values = get.sys.value(exp_str, t, par1, par2, dis_fn)
     }else{
