@@ -62,10 +62,6 @@ shinyUI(pageWithSidebar(
                h4('Gamma distribution'),
                tableOutput('gamma.pm.table')
                ),
-      
-      
-      #tabPanel('Dynamic Graph',
-      #         uiOutput('html')),
 
       tabPanel('Plot', plotOutput('plot1'), 
                plotOutput('plot2'), 

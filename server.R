@@ -35,8 +35,6 @@ shinyServer(function(input, output){
     data = datasetInput()
     coln = input$seletedData
     i = which.names(coln, names(data))
-    #if(length(i) == 0)
-    #  return(NULL)
     r = data[,i]
     return(r)
   })
@@ -239,9 +237,7 @@ shinyServer(function(input, output){
     r = get.weib2.result(data[,i])
     par(mfrow=c(1,2))
     hist(data[,i], col='darkgray', border='white', main=paste('Histogram of', coln), prob=T, xlab=coln)
-    #lines(density(data[,i], n=length(data[,i])), col='red')
     rug(jitter(data[,i]))
-    #qq.plot(data[,i], ylab=coln, main=paste('Normal QQ plot of', coln))
     weibplot(data[,i], shape=c(1, r$par[1]), scale=c(mean(data[,i]), r$par[2]), labels=c('before', 'after'), mono=F, main=paste('Weib Plot of ', coln))
   })
   
@@ -260,12 +256,8 @@ shinyServer(function(input, output){
     boxplot(data[,i], ylab=coln, main=paste('boxplot of ', coln))
     rug(jitter(data[,i]), side=2)
     abline(h=mean(data[,i], na.rm=T), lty=2)
-    #line_data = matrix(c(density(data[,i]), pweibull(data[,i], beta, tau)), length(data[,i]), 2)
-    #line_data = data.frame('density'=density(data[,i]), 'weibull'=pweibull(data[,i], beta, tau))
-    #matplot(line_data, type='l', lty=1:2, col=2:3, bg=4:5, main=paste('Density and weibull distribution line of ', coln))
     plot(density(data[,i]), type='l', col='red', lty=2, ylim=c(0,0.02), main='')
     lines(data[,i], dweibull(data[,i], beta, tau), col='green', lty=1, type='p', pch=4)
-    #lines(data[,i], pweibull(data[,i], beta, tau), col='blue', lty=3, type='b', pch=3)
     title('Weibul distribution and densitiy line')
     legend(x=min(data[,i]), legend=c('density', 'dweibull'), col=c('red', 'green'), lty=c(2, 1), pch=c(-1, 4), merge=TRUE, bg='gray90')
     
@@ -389,16 +381,6 @@ shinyServer(function(input, output){
     }
     plot(x=t, y=values$density, type='l', col="red", main=paste('Density Curve of ', coln), xlab=coln, ylab='density')
   })
-  
-  #output$dexp = renderText({
-  #  i_str = input$exp_input
-  #  dis_fn = input$distribution
-  #  if(i_str == '')
-  #    return('Please enter a expression.')
-  #  dexp = get.sys.d.expression(i_str, dis_fn)
-  #  simp_exp = Simplify(dexp)
-  #  return(as.character(simp_exp))
-  #})
   
   output$expTb = renderTable({
     if(input$exp_input == '')
