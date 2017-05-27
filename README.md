@@ -13,7 +13,7 @@ Unter dem Reiter "Summary" wird die Inhaltsangabe dargestellt.
 Unter dem Reiter "Parameters Estimation" werden die Parameter von mehreren Verteilungen unter ML-Methode geschätzt. Dabei kann man eine Datengruppe auswählen als die Statusdaten der Zensierung in der Schätzungsarbeit einzusetzen, wenn keine Daten wahrgenommen wird, handelt es sich hier nur um die allgemeine Situation. Um die Schätzungsergebnisse schauen zu können, muss man die allen Konfigurierungen noch durch den Knopf "Confirm" sicherstellen. 
 <img src="imgs/ui4.png">
 
-Unter Dem Reiter "Plot" wird die Daten grafischerweise dargestellt. Außer den allgemeinen Grafiken wie Histogramm, Boxplot, Verteilungskurve, etc. wird ein Kaplan-Meier-Plot hier auch generiert, jedoch nur wenn eine angemessene Zensiterungsdaten ausgeführt wurde.
+Unter Dem Reiter "Plot" wird die Daten grafischerweise dargestellt. Außer den allgemeinen Grafiken wie Histogramm, Boxplot, Verteilungskurve, etc. wird ein Kaplan-Meier-Plot hier auch generiert, jedoch nur wenn eine angemessene Zensiterungsdaten ausgeführt wurde.<br>
 <img src="imgs/ui5.png" height="400">
 
 <img src="imgs/ui6.png" height="400" width="600">
