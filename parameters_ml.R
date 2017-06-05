@@ -15,7 +15,7 @@ get.gamma.result = function(x, q_data=NULL){
       lnL = sum(dgamma(x, alpha, beta, log=TRUE)*q + log(1-pgamma(x, alpha, beta))*(1-q))
       return(-lnL)
     }
-    r = optim(c(5, 1), gammaFn, x=x, q=q_data)
+    r = optim(c(1, 0.01), gammaFn, x=x, q=q_data)
   }
   zensiert = q_data[q_data == 0]
   r['N'] = length(x)
@@ -26,22 +26,25 @@ get.gamma.result = function(x, q_data=NULL){
 get.gumbel.result = function(x, q_data=NULL){
   if(is.null(q_data)){
     gumbelFn = function(theta, x){
-      miu = theta[1]
-      beta = theta[2]
+      beta = theta[1]
+      miu = theta[2]
+      if(beta <= 0)
+        beta = 1
       n = length(x)
-      lnL = n*log(1/beta) - sum((x-miu)/beta + exp(-((x-miu)/beta)))
+      lnL = sum(dgumbel(x, miu, beta, log=TRUE))#n*log(1/beta) - sum((x-miu)/beta + exp(-((x-miu)/beta)))
       return(-lnL)
     }
-    r = optim(c(0, 1), gumbelFn, x=x)
+    r = optim(c(1, 0), gumbelFn, x=x)
   }else{
     gumbelFn = function(theta, x, q){
-      miu = theta[1]
-      beta = theta[2]
-      n = length(x)
-      lnL = sum((log(1/beta) - (x-miu)/beta + exp(-((x-miu)/beta)))*q + log(1-exp(-exp(-(x-miu)/beta)))*(1-q))
+      beta = theta[1]
+      miu = theta[2]
+      if(beta <= 0)
+        beta = 1
+      lnL = sum(dgumbel(x, miu, beta, log=TRUE)*q + log(1-pgumbel(x, miu, beta))*(1-q))#sum((log(1/beta) - (x-miu)/beta + exp(-((x-miu)/beta)))*q + log(1-exp(-exp(-(x-miu)/beta)))*(1-q))
       return(-lnL)
     }
-    r = optim(c(3, 5), fn=gumbelFn, x=x, q=q_data)
+    r = optim(c(5, 0), fn=gumbelFn, x=x, q=q_data)
   }
   
   zensiert = q_data[q_data == 0]
