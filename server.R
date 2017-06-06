@@ -67,73 +67,37 @@ shinyServer(function(input, output){
     return(fn)
   })
   
-  get.parameter.table = function(fn, distribution, censoring=FALSE, ...){
+  get.parameter.table = function(censoring=FALSE, ...){
     if(is.null(datasetInput()))
       return(NULL)
     data = datasetInput()
-    dataId = NULL
-    par1 = NULL
-    par2 = NULL
-    par3 = NULL
-    par4 = NULL
-    par5 = NULL
-    value = NULL
-    N = NULL
-    zens = NULL
+    estimation.list = list('distribution'=NULL, 'par1'=NULL, 'par2'=NULL, 'par3'=NULL, 'par4'=NULL, 'par5'=NULL, 'N'=NULL, 'censored'=NULL, 'value'=NULL)
+    fns = c(get.exp.result, get.gamma.result, get.gumbel.result, get.logNormal.result, get.mixedWeib.result, get.weib2.result, get.weib3.result)
     coln = input$selectedData
     i = which.names(coln, names(data))
     if(is.numeric(data[,i])){
       coln2 = input$selectedStatus
       j = which.names(coln2, names(data))
-      if(censoring && is.numeric(data[,j])){
-        result = fn(data[,i], q_data=data[,j])
-      }else{
-        result = fn(data[,i])
+      for(fn in fns){
+        if(censoring && is.numeric(data[,j])){
+          result = fn(data[,i], q_data=data[,j])
+        }else{
+          result = fn(data[,i])
+        }
+        parameters = round(result$par, digits=3)
+        for(n in c(2:6)){
+          estimation.list[[n]] = append(estimation.list[[n]], parameters[n-1])
+        }
+        estimation.list$N = append(estimation.list$N, result$N)
+        estimation.list$censored = append(estimation.list$censored, result$Zensierung)
+        estimation.list$value = append(estimation.list$value, round(-result$value, digits=3))
+        estimation.list$distribution = append(estimation.list$distribution, result$distribution)
+        
       }
-      parameters = round(result$par, digits=3)
-      if(!is.na(parameters[1]))
-        par1 = append(par1, parameters[1])
-      if(!is.na(parameters[2]))
-        par2 = append(par2, parameters[2])
-      if(!is.na(parameters[3]))
-        par3 = append(par3, parameters[3])
-      if(!is.na(parameters[4]))
-        par4 = append(par4, parameters[4])
-      if(!is.na(parameters[5]))
-        par5 = append(par5, parameters[5])
-      N = append(N, result$N)
-      zens = append(zens, result$Zensierung)
-      value = append(value, round(-result$value, digits=3))
-      dataId = append(dataId, coln)
     }
-    if(distribution == 'weib2')
-      pm.dataset = data.frame('data'=dataId, 'beta'=par1, 'tau'=par2, 'value'=value)
-    if(distribution == 'z_weib2')
-      pm.dataset = data.frame('data'=dataId, 'beta'=par1, 'tau'=par2, 'N'=N, 'Zensierung'=zens, 'value'=value)
-    if(distribution == 'weib3')
-      pm.dataset = data.frame('data'=dataId, 'beta'=par1, 'tau'=par2, 'sigma'=par3, 'value'=value)
-    if(distribution == 'z_weib3')
-      pm.dataset = data.frame('data'=dataId, 'beta'=par1, 'tau'=par2, 'sigma'=par3, 'N'=N, 'Zensierung'=zens, 'value'=value)
-    if(distribution == 'mixedWeib')
-      pm.dataset = data.frame('data'=dataId, 'beta1'=par1, 'tau1'=par2, 'beta2'=par3, 'tau2'=par4, 'p'=par5, 'value'=value)
-    if(distribution == 'z_mixedWeib')
-      pm.dataset = data.frame('data'=dataId, 'beta1'=par1, 'tau1'=par2, 'beta2'=par3, 'tau2'=par4, 'p'=par5, 'N'=N, 'Zensierung'=zens, 'value'=value)
-    if(distribution == 'exp')
-      pm.dataset = data.frame('data'=dataId, 'lambda'=par1, 'value'=value)
-    if(distribution == 'z_exp')
-      pm.dataset = data.frame('data'=dataId, 'lambda'=par1, 'N'=N, 'Zensierung'=zens, 'value'=value)
-    if(distribution == 'logNormal')
-      pm.dataset = data.frame('data'=dataId, 'miu'=par1, 'sigma'=par2, 'value'=value)
-    if(distribution == 'z_logNormal')
-      pm.dataset = data.frame('data'=dataId, 'miu'=par1, 'sigma'=par2, 'N'=N, 'Zensierung'=zens, 'value'=value)
-    if(distribution == 'gumbel')
-      pm.dataset = data.frame('data'=dataId, 'miu'=par1, 'beta'=par2, 'value'=value)
-    if(distribution == 'z_gumbel')
-      pm.dataset = data.frame('data'=dataId, 'miu'=par1, 'beta'=par2, 'N'=N, 'Zensierung'=zens, 'value'=value)
-    if(distribution == 'gamma')
-      pm.dataset = data.frame('data'=dataId, 'alpha'=par1, 'beta'=par2, 'value'=value)
-    if(distribution == 'z_gamma')
-      pm.dataset = data.frame('data'=dataId, 'alpha'=par1, 'beta'=par2, 'N'=N, 'Zensierung'=zens, 'value'=value)
+    
+    pm.dataset = data.frame(estimation.list)
+    pm.dataset = pm.dataset[order(-pm.dataset$value),]
     return(pm.dataset)
   }
   
@@ -145,73 +109,13 @@ shinyServer(function(input, output){
     summary(datasetInput())
   })
   
-  output$weib2.pm.table = renderTable({
+  output$pm.table = renderTable({
     if(is.null(input$selectedStatus)){
       return()
     }else if(input$selectedStatus == 'None'){
-      get.parameter.table(get.weib2.result, 'weib2')
+      get.parameter.table()
     }else{
-      get.parameter.table(get.weib2.result, 'z_weib2', censoring=TRUE)
-    }
-  })
-  
-  output$weib3.pm.table = renderTable({
-    if(is.null(input$selectedStatus)){
-      return()
-    }else if(input$selectedStatus == 'None'){
-      get.parameter.table(get.weib3.result, 'weib3')
-    }else{
-      get.parameter.table(get.weib3.result, 'z_weib3', censoring=TRUE)
-    }
-  })
-  
-  output$mixedWeib.pm.table = renderTable({
-    if(is.null(input$selectedStatus)){
-      return()
-    }else if(input$selectedStatus == 'None'){
-      get.parameter.table(get.mixedWeib.result, 'mixedWeib')
-    }else{
-      get.parameter.table(get.mixedWeib.result, 'z_mixedWeib', TRUE)
-    }
-  })
-  
-  output$exp.pm.table = renderTable({
-    if(is.null(input$selectedStatus)){
-      return()
-    }else if(input$selectedStatus == 'None'){
-      get.parameter.table(get.exp.result, 'exp')
-    }else{
-      get.parameter.table(get.exp.result, 'z_exp', TRUE)
-    }
-  })
-  
-  output$logNormal.pm.table = renderTable({
-    if(is.null(input$selectedStatus)){
-      return()
-    }else if(input$selectedStatus == 'None'){
-      get.parameter.table(get.logNormal.result, 'logNormal')
-    }else{
-      get.parameter.table(get.logNormal.result, 'z_logNormal', TRUE)
-    }
-  })
-  
-  output$gumbel.pm.table = renderTable({
-    if(is.null(input$selectedStatus)){
-      return()
-    }else if(input$selectedStatus == 'None'){
-      get.parameter.table(get.gumbel.result, 'gumbel')
-    }else{
-      get.parameter.table(get.gumbel.result, 'z_gumbel', TRUE)
-    }
-  })
-  
-  output$gamma.pm.table = renderTable({
-    if(is.null(input$selectedStatus)){
-      return()
-    }else if(input$selectedStatus == 'None'){
-      get.parameter.table(get.gamma.result, 'gamma')
-    }else{
-      get.parameter.table(get.gamma.result, 'z_gamma', TRUE)
+      get.parameter.table(censoring=TRUE)
     }
   })
   

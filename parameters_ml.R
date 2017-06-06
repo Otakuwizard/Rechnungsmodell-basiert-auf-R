@@ -3,7 +3,6 @@ get.gamma.result = function(x, q_data=NULL){
     gammaFn = function(theta, x){
       alpha = theta[1]
       beta = theta[2]
-      n = length(x)
       lnL = sum(dgamma(x, alpha, beta, log=TRUE)) #sum(log((x**(alpha-1))/(gamma(alpha)*(beta**alpha)))) - sum(x/beta)
       return(-lnL)
     }
@@ -20,6 +19,7 @@ get.gamma.result = function(x, q_data=NULL){
   zensiert = q_data[q_data == 0]
   r['N'] = length(x)
   r['Zensierung'] = length(zensiert)
+  r['distribution'] = 'Gamma'
   return(r)
 }
 
@@ -50,6 +50,7 @@ get.gumbel.result = function(x, q_data=NULL){
   zensiert = q_data[q_data == 0]
   r['N'] = length(x)
   r['Zensierung'] = length(zensiert)
+  r['distribution'] = 'Gumbel'
   return(r)
 }
 
@@ -73,6 +74,7 @@ get.logNormal.result = function(x, q_data=NULL){
   zensiert = q_data[q_data == 0]
   r['N'] = length(x)
   r['Zensierung'] = length(zensiert)
+  r['distribution'] = 'Lognormal'
   return(r)
 }
 
@@ -94,6 +96,7 @@ get.exp.result = function(x, q_data=NULL){
   zensiert = q_data[q_data == 0]
   r['N'] = length(x)
   r['Zensierung'] = length(zensiert)
+  r['distribution'] = 'Exponential'
   return(r)
 }
 
@@ -114,6 +117,7 @@ get.weib3.result = function(x, q_data=NULL){
   zensiert = q_data[q_data == 0]
   r['N'] = length(x)
   r['Zensierung'] = length(zensiert)
+  r['distribution'] = 'Weibull3'
   return(r)
 }
 
@@ -139,6 +143,7 @@ get.mixedWeib.result = function(x, q_data=NULL){
   zensiert = q_data[q_data == 0]
   r['N'] = length(x)
   r['Zensierung'] = length(zensiert)
+  r['distribution'] = 'WeibullMix'
   return(r)
 }
 
@@ -158,5 +163,6 @@ get.weib2.result = function(x, q_data=NULL){
   zensiert = q_data[q_data == 0]
   r['N'] = length(x)
   r['Zensierung'] = length(zensiert)
+  r['distribution'] = 'Weibull2'
   return(r)
 }

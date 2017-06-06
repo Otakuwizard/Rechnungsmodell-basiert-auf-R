@@ -41,26 +41,8 @@ shinyUI(pageWithSidebar(
       tabPanel('Table', tableOutput('table')),
       tabPanel('Summary', verbatimTextOutput('summary')),
       tabPanel('Parameters Estimation',
-               h4('Weibull-distribution with two parameters'),
-               tableOutput('weib2.pm.table'),
-               
-               h4('Weibull-distribution with three parameters'),
-               tableOutput('weib3.pm.table'),
-               
-               h4('Mixed weibull-distribution'),
-               tableOutput('mixedWeib.pm.table'),
-               
-               h4('Exponential distribution'),
-               tableOutput('exp.pm.table'),
-               
-               h4('Lognormal distribution'),
-               tableOutput('logNormal.pm.table'),
-               
-               h4('Gumbel distribution'),
-               tableOutput('gumbel.pm.table'),
-               
-               h4('Gamma distribution'),
-               tableOutput('gamma.pm.table')
+               h4('Estimated Parameters and censoring details'),
+               tableOutput('pm.table')
                ),
 
       tabPanel('Plot', plotOutput('plot1'), 
