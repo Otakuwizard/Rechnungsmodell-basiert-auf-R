@@ -86,7 +86,11 @@ shinyServer(function(input, output){
         }
         parameters = round(result$par, digits=3)
         for(n in c(2:6)){
-          estimation.list[[n]] = append(estimation.list[[n]], parameters[n-1])
+          if(is.na(parameters[n-1])){
+            estimation.list[[n]] = append(estimation.list[[n]], '')
+          }else{
+            estimation.list[[n]] = append(estimation.list[[n]], parameters[n-1])
+          }
         }
         estimation.list$N = append(estimation.list$N, result$N)
         estimation.list$censored = append(estimation.list$censored, result$Zensierung)
